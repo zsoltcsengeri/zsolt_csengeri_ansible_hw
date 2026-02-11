@@ -7,7 +7,7 @@
   become: yes
 
   vars:
-    my_name: "{{ my_name | default('Zsolt Csengeri') }}"
+    my_name: "Zsolt Csengeri"
 
   tasks:
     - name: Install nginx
