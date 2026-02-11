@@ -1,3 +1,4 @@
 # Ignore Vagrant local environment files
 .vagrant/
 *.log
+shared/zsolt_csengeri_ansible_hw/
