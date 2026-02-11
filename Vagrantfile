@@ -1,57 +1,32 @@
-# -*- mode: ruby -*-
+# -*- mode: ruby -*- 
 # vi: set ft=ruby :
-
-$etchosts = <<-SCRIPT
-cp /etc/hosts /root && \
-echo '\n192.168.56.210 control.devopstraining.com' >> /etc/hosts && \
-echo '192.168.56.211 managed_1_r9.devopstraining.com m-rocky9' >> /etc/hosts && \
-echo '192.168.56.212 managed_2_c7.devopstraining.com m-centos7' >> /etc/hosts 
-SCRIPT
-
 
 Vagrant.configure("2") do |config|
 
 
 
-  config.vm.define "managed_1_r9" do |managed_1_r9|
-    managed_1_r9.vm.box = "bento/rockylinux-9"
-    managed_1_r9.vm.provider "virtualbox" do |vb|
-      vb.memory = "768"
+  config.vm.define "ansible" do |ansible| # ansible control node  
+    ansible.vm.box = "bento/rockylinux-9" # vagrant box to use  
+    ansible.vm.provider "virtualbox" do |vb| # virtualbox provider settings
+      vb.memory = "1024" # memory size for the VM 
     end
-    managed_1_r9.vm.network "private_network", ip: "192.168.56.211"
-    managed_1_r9.vm.synced_folder "./shared", "/shared"
-    managed_1_r9.vm.provision "shell", inline: $etchosts
-    managed_1_r9.vm.provision "shell", inline: "useradd -m -p '$1$1TFUzyze$yuYQK7Nszcs7QjCd6KAAT1' rocky" #passwd -1 "rocky"
-    managed_1_r9.vm.provision "shell", inline: "hostnamectl set-hostname m-rocky9"
+    ansible.vm.network "private_network", ip: "192.168.56.211" # private network with static IP 
+    ansible.vm.synced_folder "./shared", "/shared" # shared folder between host and VM
+    ansible.vm.provision "shell", inline: "dnf install -y git ansible" # install git and ansible on the control node
+    ansible.vm.provision "shell", inline: "hostnamectl set-hostname ansible" # set hostname for the control node
   end
+  
 
-  config.vm.define "managed_2_c7" do |managed_2_c7|
-    managed_2_c7.vm.box = "geerlingguy/centos7"
-    managed_2_c7.vm.provider "virtualbox" do |vb|
-      vb.memory = "768"
+  config.vm.define "web" do |web| # web server node
+    web.vm.box = "geerlingguy/centos7"
+    web.vm.provider "virtualbox" do |vb| 
+      vb.memory = "1024" 
     end
-    managed_2_c7.vm.network "private_network", ip: "192.168.56.212"
-    managed_2_c7.vm.synced_folder "./shared", "/shared"
-    managed_2_c7.vm.provision "shell", inline: $etchosts
-    managed_2_c7.vm.provision "shell", inline: "useradd -m -p '$1$GLz11URO$/o.t34TrCJkBD9iIOyHJ0.' centos" # openssl passwd -1 "centos"
-    managed_2_c7.vm.provision "shell", inline: "hostnamectl set-hostname m-centos7"
-  end
-
-
-  config.vm.define "control" do |control|
-    control.vm.box = "bento/rockylinux-9"
-    control.vm.provider "virtualbox" do |vb|
-      vb.memory = "4096"
-    end
-    control.vm.network "private_network", ip: "192.168.56.210"
-    control.vm.hostname = "control"
-    control.vm.synced_folder "./shared", "/shared"
-    control.vm.provision "shell", inline: $etchosts
-    control.vm.provision "shell", path: "provision/ansible.sh"
-    control.vm.provision "shell", path: "provision/awx.sh"
-    control.vm.provision "shell", inline: "ssh-keyscan m-rocky9 >> ~/.ssh/known_hosts" #ssh host key check (fingerprint)
-    control.vm.provision "shell", inline: "ssh-keyscan m-centos7 >> ~/.ssh/known_hosts" #ssh host key check (fingerprint)
-    control.vm.provision "shell", inline: "hostnamectl set-hostname control"
-    control.vm.network "forwarded_port", guest:8043, host:8043
+    web.vm.network "private_network", ip: "192.168.56.212"
+    web.vm.synced_folder "./shared", "/shared"
+    # create user, "homework" as sudoer with password "homework" (hashed using openssl)
+    web.vm.provision "shell", inline: "useradd -m -p '$1$1TFUzyze$yuYQK7Nszcs7QjCd6KAAT1' homework && echo 'homework ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers" # create user "homework" with password "homework" and add to sudoers for passwordless sudo access  
+    web.vm.provision "shell", inline: "hostnamectl set-hostname web" # set hostname for the web server node
+    web.vm.network "forwarded_port", guest:80, host:8888, auto_correct: true # forward port 80 on the guest to port 8888 on the host, with auto-correction if port 8888 is already in use
   end
 end

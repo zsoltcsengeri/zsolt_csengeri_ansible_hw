@@ -1,0 +1,38 @@
+# This playbook installs nginx on the target hosts and displays a simple webpage with the name "Zsolt Csengeri".
+# It ensures that nginx is running and enabled to start on boot.
+# The index.html file is created with the specified content using the copy module.
+
+- name: Install nginx and set up a simple webpage
+  hosts: web
+  become: yes
+
+  vars:
+    my_name: "Zsolt Csengeri"
+
+  tasks:
+    - name: Install nginx using dnf
+      dnf:
+        name: nginx
+        state: present
+    - name: Ensure nginx is running and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+    - name: Deploy custom index.html
+      template:
+        src: index.html.j2
+        dest: /usr/share/nginx/html/index.html # The destination path for the index.html file in the nginx web root directory
+# The index.html.j2 template file should contain the following content:
+# <html>  
+# <head><title>Welcome</title></head>
+# <body>
+# <h1>{{ my_name }}</h1>
+# </body>
+# </html>
+      owner: nginx # Set the owner of the file to nginx
+      group: nginx # Set the group of the file to nginx
+      mode: '0644' # Set the permissions of the file to 0644 (readable by everyone, writable by owner)
+      
+  
+
