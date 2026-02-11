@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Create user for Ansible (idempotent)
 id homework >/dev/null 2>&1 || useradd -m homework
