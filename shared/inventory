@@ -1,3 +1,2 @@
 [web]
-192.168.56.212 ansible_user=homework ansible_password=homework ansible_become=true
-
+192.168.56.212 ansible_user=homework ansible_password=homework
